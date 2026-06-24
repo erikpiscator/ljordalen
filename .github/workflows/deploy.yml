@@ -1,0 +1,52 @@
+name: Deploy to App Engine
+
+# Deploys to Google App Engine when you publish a GitHub Release.
+# Auth is keyless via Workload Identity Federation — no service-account key is
+# stored in GitHub. Runtime secrets are written to env.yaml from GitHub Actions
+# secrets just before deploy (env.yaml is gitignored).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: # also allow manual runs from the Actions tab
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+
+env:
+  PROJECT_ID: ljordalen-booking
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ljordalen-booking
+          workload_identity_provider: projects/241239742436/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-deployer@ljordalen-booking.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # Build the gitignored env.yaml that app.yaml `includes`.
+      - name: Write env.yaml
+        run: |
+          cat > env.yaml <<'YAML'
+          env_variables:
+            NODE_ENV: "production"
+            AUTH_SECRET: "${{ secrets.AUTH_SECRET }}"
+            AUTH_GOOGLE_ID: "${{ secrets.AUTH_GOOGLE_ID }}"
+            AUTH_GOOGLE_SECRET: "${{ secrets.AUTH_GOOGLE_SECRET }}"
+            AUTH_URL: "${{ vars.AUTH_URL }}"
+            STORAGE_BUCKET: "${{ vars.STORAGE_BUCKET }}"
+            ADMIN_EMAILS: "${{ vars.ADMIN_EMAILS }}"
+            RESEND_API_KEY: "${{ secrets.RESEND_API_KEY }}"
+            RESEND_FROM: "${{ vars.RESEND_FROM }}"
+          YAML
+
+      - name: Deploy
+        run: gcloud app deploy app.yaml --quiet --project=ljordalen-booking

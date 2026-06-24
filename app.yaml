@@ -1,0 +1,27 @@
+# Google App Engine (Node.js standard) config for Ljørdalen.
+#
+# Deploy:  gcloud app deploy
+#
+# App Engine runs `npm install` → `npm run gcp-build` (next build) at deploy
+# time, and `npm start` (next start -p $PORT) at runtime. GOOGLE_CLOUD_PROJECT
+# and the default service account (Firestore + Storage access) are provided
+# automatically — no key needed.
+#
+# Secrets live in env.yaml, which is gitignored. Locally you create it from
+# env.example.yaml; in CI the workflow writes it from GitHub Actions secrets.
+runtime: nodejs22
+
+instance_class: F1
+
+automatic_scaling:
+  min_instances: 0 # scale to zero when idle -> stays in the free tier
+  max_instances: 2
+  target_cpu_utilization: 0.7
+
+includes:
+  - env.yaml
+
+handlers:
+  - url: /.*
+    secure: always
+    script: auto
