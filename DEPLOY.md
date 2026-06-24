@@ -16,13 +16,22 @@ Firestore **Native** DB (eur3) · public avatars bucket
 `ljordalen-booking-avatars` · Workload Identity Federation (pool + repo-locked
 provider + `github-deployer` SA) · first deploy.
 
-**Remaining (needs you):**
-1. **Google OAuth client** — the app deployed with *placeholder* credentials, so
-   "Fortsätt med Google" won't work until you create a real client (step 3) and
-   update `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`, then redeploy
-   (`gcloud app deploy`) or set them as GitHub secrets.
-2. **GitHub repo + push** (step 5) to enable release-triggered CI.
-3. *(optional)* **Resend** key for email notifications.
+Also done: **Google OAuth client** created + wired (sign-in works), **code
+pushed** to `erikpiscator/ljordalen`, and **secrets live in GCP Secret Manager**
+(`auth-secret`, `auth-google-secret`) — the CI reads them via WIF, so **GitHub
+needs no secrets at all** (mirrors chollo).
+
+**To ship a new version:** publish a GitHub Release (or run the workflow
+manually) — it deploys automatically.
+
+**Optional — enable email:** create a Resend key secret and the CI picks it up:
+```bash
+printf '%s' "re_yourkey" | gcloud secrets create resend-api-key \
+  --project=ljordalen-booking --data-file=-
+gcloud secrets add-iam-policy-binding resend-api-key --project=ljordalen-booking \
+  --member="serviceAccount:github-deployer@ljordalen-booking.iam.gserviceaccount.com" \
+  --role=roles/secretmanager.secretAccessor
+```
 
 ---
 
