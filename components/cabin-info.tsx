@@ -11,9 +11,11 @@ import { updateCabinInfoAction } from "@/app/actions/info";
 export function CabinInfo({
   content,
   canEdit,
+  compact = false,
 }: {
   content: string;
   canEdit: boolean;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = React.useState(false);
@@ -29,6 +31,50 @@ export function CabinInfo({
         router.refresh();
       } else toast.error(res.error);
     });
+  }
+
+  if (compact) {
+    return (
+      <div className="space-y-3">
+        {editing ? (
+          <div className="space-y-3">
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={12}
+              className="font-mono text-sm"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setDraft(content); setEditing(false); }}
+                disabled={pending}
+              >Avbryt</Button>
+              <Button size="sm" onClick={save} disabled={pending}>
+                {pending ? "Sparar…" : "Spara"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+              {content}
+            </div>
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-1 right-0 text-muted-foreground"
+                onClick={() => setEditing(true)}
+              >
+                <Pencil className="size-3.5" /> Ändra
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (

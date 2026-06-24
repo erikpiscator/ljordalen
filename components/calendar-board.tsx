@@ -16,11 +16,18 @@ import {
   startOfWeek,
 } from "date-fns";
 import { sv } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListChecks, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MemberAvatar } from "@/components/member-avatar";
 import { BookingDialog } from "./booking-dialog";
 import { BookingDetailDialog } from "./booking-detail";
+import { BookingsList } from "./bookings-list";
 import { YearView } from "./year-view";
 import { bookingName } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -48,6 +55,7 @@ export function CalendarBoard({
 
   const [month, setMonth] = React.useState(() => startOfMonth(new Date()));
   const [view, setView] = React.useState<"month" | "year">("month");
+  const [showBookings, setShowBookings] = React.useState(false);
   const [create, setCreate] = React.useState({ open: false, start: "", end: "" });
   const [detail, setDetail] = React.useState<BookingWithMember | null>(null);
   const [edit, setEdit] = React.useState<{
@@ -146,6 +154,13 @@ export function CalendarBoard({
             }
           >
             <ChevronRight />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBookings(true)}
+          >
+            <ListChecks /> Bokningar
           </Button>
           <Button size="sm" onClick={() => openCreate(todayStr)}>
             <Plus /> Boka
@@ -274,6 +289,22 @@ export function CalendarBoard({
         }}
         onDone={refresh}
       />
+
+      <Dialog open={showBookings} onOpenChange={setShowBookings}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader className="mr-6">
+            <DialogTitle>Bokningar</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[65vh] overflow-y-auto">
+            <BookingsList
+              bookings={bookings}
+              me={me}
+              settings={settings}
+              hideTitle
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

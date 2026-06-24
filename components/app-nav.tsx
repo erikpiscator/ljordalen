@@ -1,13 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CalendarDays,
-  Info,
-  ListChecks,
-  Megaphone,
-  Users,
-} from "lucide-react";
+import { CalendarDays, Home, Megaphone, Users } from "lucide-react";
 import { BrandWordmark } from "@/components/brand";
 import { MemberAvatar } from "@/components/member-avatar";
 import {
@@ -33,11 +27,10 @@ export interface NavUser {
 }
 
 const links = [
-  { href: "/", label: "Kalender", icon: CalendarDays },
-  { href: "/bookings", label: "Bokningar", icon: ListChecks },
+  { href: "/", label: "Hem", icon: Home },
+  { href: "/calendar", label: "Kalender", icon: CalendarDays },
   { href: "/announcements", label: "Anslag", icon: Megaphone },
   { href: "/family", label: "Familj", icon: Users },
-  { href: "/info", label: "Info", icon: Info },
 ];
 
 export function AppNav({ user }: { user: NavUser }) {

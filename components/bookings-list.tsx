@@ -71,10 +71,12 @@ export function BookingsList({
   bookings,
   me,
   settings,
+  hideTitle = false,
 }: {
   bookings: BookingWithMember[];
   me: Me;
   settings: BookingSettings;
+  hideTitle?: boolean;
 }) {
   const router = useRouter();
   const refresh = () => router.refresh();
@@ -104,7 +106,7 @@ export function BookingsList({
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">Bokningar</h1>
+      {!hideTitle && <h1 className="text-xl font-semibold tracking-tight">Bokningar</h1>}
 
       {households.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
