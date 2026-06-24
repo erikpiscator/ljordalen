@@ -52,7 +52,7 @@ jobs:
             STORAGE_BUCKET: "ljordalen-booking-avatars"
             ADMIN_EMAILS: "erik.piscator@protonmail.com,erik.piscator@gmail.com"
             RESEND_API_KEY: "$RESEND_API_KEY"
-            RESEND_FROM: "Ljørdalen <noreply@ljordalen-booking.ew.r.appspot.com>"
+            RESEND_FROM: "Hoelskogen 52 <noreply@hoelskogen52.se>"
           YAML
 
       - name: Deploy

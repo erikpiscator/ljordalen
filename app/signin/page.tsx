@@ -17,7 +17,8 @@ export default async function SignInPage() {
           <div className="mb-2 flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <BrandMark className="size-8" />
           </div>
-          <CardTitle className="text-2xl">Ljørdalen</CardTitle>
+          <CardTitle className="text-2xl">Hoelskogen 52</CardTitle>
+          <p className="text-sm font-medium text-muted-foreground">Ljørdalen</p>
           <CardDescription>
             Familjens stugbokningskalender. Logga in för att se vem som är där och boka din vistelse.
           </CardDescription>

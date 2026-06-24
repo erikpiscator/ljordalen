@@ -25,7 +25,7 @@ export function BrandWordmark({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2 font-semibold tracking-tight", className)}>
       <BrandMark className="size-5 text-primary" />
-      Ljørdalen
+      Hoelskogen 52
     </span>
   );
 }

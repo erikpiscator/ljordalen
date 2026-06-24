@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ljørdalen — Stugbokning",
+  title: "Hoelskogen 52 — Stugbokning",
   description: "Boka familjens stuga och se vem som är där när.",
 };
 
