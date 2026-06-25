@@ -51,6 +51,7 @@ jobs:
             AUTH_URL: "https://hoelskogen52.se"
             STORAGE_BUCKET: "ljordalen-booking-avatars"
             ADMIN_EMAILS: "erik.piscator@protonmail.com,erik.piscator@gmail.com"
+            ALLOWED_EMAILS: "hakan.piscator@hotmail.com"
             RESEND_API_KEY: "$RESEND_API_KEY"
             RESEND_FROM: "Hoelskogen 52 <noreply@hoelskogen52.se>"
           YAML

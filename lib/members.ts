@@ -17,13 +17,22 @@ export function notifyAddress(m: Member): string {
   return m.notifyEmail?.trim() || m.email;
 }
 
-function adminEmails(): Set<string> {
+function emailSet(value: string | undefined): Set<string> {
   return new Set(
-    (process.env.ADMIN_EMAILS ?? "")
+    (value ?? "")
       .split(",")
       .map((e) => normalizeEmail(e))
       .filter(Boolean),
   );
+}
+
+function adminEmails(): Set<string> {
+  return emailSet(process.env.ADMIN_EMAILS);
+}
+
+/** Non-admin emails permitted to sign in; auto-provisioned as regular members. */
+function allowedEmails(): Set<string> {
+  return emailSet(process.env.ALLOWED_EMAILS);
 }
 
 export async function getMember(email: string): Promise<Member | null> {
@@ -136,6 +145,13 @@ export async function resolveMemberForAuth(
       email: normalized,
       name: name ?? normalized.split("@")[0],
       role: "admin",
+    });
+  }
+  if (allowedEmails().has(normalized)) {
+    return createMember({
+      email: normalized,
+      name: name ?? normalized.split("@")[0],
+      role: "member",
     });
   }
   return null;
