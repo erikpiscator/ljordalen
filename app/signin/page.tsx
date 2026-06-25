@@ -3,6 +3,7 @@ import { auth, signIn } from "@/lib/auth";
 import { devLoginEnabled } from "@/lib/auth.config";
 import { BrandMark } from "@/components/brand";
 import { DevSignIn } from "@/components/dev-signin";
+import { PasswordAuth } from "@/components/password-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -39,6 +40,8 @@ export default async function SignInPage() {
             Åtkomst är begränsad till familjemedlemmar. Kommer du inte in, be
             administratören lägga till dig.
           </p>
+
+          <PasswordAuth />
 
           {devLoginEnabled && <DevSignIn />}
         </CardContent>

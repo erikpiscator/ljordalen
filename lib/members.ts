@@ -35,6 +35,14 @@ function allowedEmails(): Set<string> {
   return emailSet(process.env.ALLOWED_EMAILS);
 }
 
+/** The role an email is allowlisted for via env vars, or null if not listed. */
+export function allowlistRole(email: string): Role | null {
+  const n = normalizeEmail(email);
+  if (adminEmails().has(n)) return "admin";
+  if (allowedEmails().has(n)) return "member";
+  return null;
+}
+
 export async function getMember(email: string): Promise<Member | null> {
   const snap = await db.collection(MEMBERS).doc(normalizeEmail(email)).get();
   return snap.exists ? (snap.data() as Member) : null;
