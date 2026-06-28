@@ -86,7 +86,11 @@ export async function updateBookingAction(
       household: existing.household,
       note: (input.note ?? "").trim(),
     });
-    await notifyBooking("updated", booking, member);
+    // Only notify everyone when the stay's dates actually move — note-only or
+    // other trivial edits aren't worth an email to the whole family.
+    const datesChanged =
+      existing.start !== booking.start || existing.end !== booking.end;
+    if (datesChanged) await notifyBooking("updated", booking, member);
     refresh();
     return { ok: true };
   } catch (e) {

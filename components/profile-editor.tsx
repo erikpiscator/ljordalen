@@ -209,7 +209,7 @@ export function ProfileEditor({
             </div>
             <p className="text-xs text-muted-foreground">
               Används för aviseringar om du vill ha dem till en annan adress än
-              ditt Google-konto.
+              den du loggar in med.
             </p>
           </div>
         </CardContent>

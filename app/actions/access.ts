@@ -7,7 +7,7 @@ import {
   deleteAccessRequest,
   getAccessRequest,
 } from "@/lib/access-requests";
-import { notifyAccessRequest } from "@/lib/notify";
+import { notifyAccessApproved, notifyAccessRequest } from "@/lib/notify";
 
 export type Result = { ok: true } | { ok: false; error: string };
 
@@ -64,6 +64,7 @@ export async function approveRequestAction(email: string): Promise<Result> {
     await createMember({ email: target, name: request.name, role: "member" });
   }
   await deleteAccessRequest(target);
+  await notifyAccessApproved(target, request.name);
   revalidatePath("/admin");
   revalidatePath("/family");
   return { ok: true };

@@ -89,14 +89,20 @@ export async function notifyBooking(
   });
 }
 
-/** The addresses to notify when someone requests access: active admins, plus
- * the bootstrap ADMIN_EMAILS so the very first admin is reachable too. */
+/**
+ * The addresses to notify when someone requests access. Active admins' notify
+ * addresses (respecting each admin's notis-e-post), or — only before any admin
+ * member exists — the bootstrap ADMIN_EMAILS so the very first admin is still
+ * reachable. The env list is a fallback, not an addition, so an admin who set a
+ * notis-e-post isn't also emailed at their login address.
+ */
 async function adminRecipients(): Promise<string[]> {
   const members = await listMembers();
-  const admins = members
-    .filter((m) => m.active && m.role === "admin")
-    .map(notifyAddress);
-  return Array.from(new Set([...admins, ...bootstrapAdminEmails()]));
+  const admins = members.filter((m) => m.active && m.role === "admin");
+  if (admins.length > 0) {
+    return Array.from(new Set(admins.map(notifyAddress)));
+  }
+  return bootstrapAdminEmails();
 }
 
 function renderAccessRequestEmail(req: AccessRequest): string {
@@ -125,6 +131,30 @@ export async function notifyAccessRequest(req: AccessRequest): Promise<void> {
     to: recipients,
     subject: `Åtkomstförfrågan från ${req.name}`,
     html: renderAccessRequestEmail(req),
+  });
+}
+
+function renderAccessApprovedEmail(name: string): string {
+  return `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
+    <div style="border-left:4px solid #111;padding:4px 16px;margin-bottom:16px">
+      <h2 style="margin:0 0 4px;font-size:18px;color:#111">Du är inne!</h2>
+      <p style="margin:0;color:#666;font-size:14px">Hej ${escapeHtml(name)}</p>
+    </div>
+    <p style="margin:8px 0;color:#444">Din åtkomst till stugkalendern är godkänd. Logga in med Google eller med en e-postkod för att komma igång.</p>
+    ${button()}
+  </div>`;
+}
+
+/** Tell a requester their access was approved and they can sign in now. */
+export async function notifyAccessApproved(
+  email: string,
+  name: string,
+): Promise<void> {
+  await sendEmail({
+    to: [email],
+    subject: "Din åtkomst till Hoelskogen 52 är godkänd",
+    html: renderAccessApprovedEmail(name),
   });
 }
 
