@@ -44,6 +44,20 @@ export interface BookingWithMember extends Booking {
   member: Pick<Member, "name" | "color" | "avatar" | "household"> | null;
 }
 
+/**
+ * A pending request to join the family calendar, sent from the sign-in page by
+ * someone who isn't on the allowlist yet. An admin approves (creates a member)
+ * or rejects it. Keyed in Firestore by the normalized email.
+ */
+export interface AccessRequest {
+  /** Lowercased email — also the Firestore document id. */
+  email: string;
+  name: string;
+  /** Optional note from the requester (e.g. "Anna's husband"). */
+  message: string;
+  createdAt: number;
+}
+
 /** Admin-configurable booking rules. 0 means "no limit". */
 export interface BookingSettings {
   /** Max nights per stay for members (admins are exempt). */

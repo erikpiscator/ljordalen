@@ -59,3 +59,5 @@ export const storage = getStorage(app);
 // Collection name constants — single source of truth.
 export const MEMBERS = "members";
 export const BOOKINGS = "bookings";
+export const ACCESS_REQUESTS = "accessRequests";
+export const LOGIN_CODES = "loginCodes";

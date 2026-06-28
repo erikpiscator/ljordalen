@@ -7,22 +7,23 @@ import {
   normalizeEmail,
   resolveMemberForAuth,
 } from "./members";
-import { verifyPassword } from "./credentials";
+import { verifyLoginCode } from "./login-codes";
 import type { Role } from "./types";
 
-// Email + password sign-in. Defined here (Node runtime) — not in auth.config —
-// so its Firestore + bcrypt verification never leaks into the edge middleware.
-const passwordProvider = Credentials({
-  id: "password",
-  name: "Lösenord",
-  credentials: { email: {}, password: {} },
+// Passwordless email sign-in: the member receives a one-time code and enters it.
+// Defined here (Node runtime) — not in auth.config — so its Firestore + bcrypt
+// verification never leaks into the edge middleware.
+const otpProvider = Credentials({
+  id: "otp",
+  name: "E-postkod",
+  credentials: { email: {}, code: {} },
   authorize: async (creds) => {
     const email = normalizeEmail(String(creds?.email ?? ""));
-    const password = String(creds?.password ?? "");
-    if (!email || !password) return null;
+    const code = String(creds?.code ?? "").trim();
+    if (!email || !code) return null;
     const member = await getMember(email);
     if (!member || !member.active) return null;
-    if (!(await verifyPassword(email, password))) return null;
+    if (!(await verifyLoginCode(email, code))) return null;
     return { id: member.email, email: member.email, name: member.name };
   },
 });
@@ -31,7 +32,7 @@ const passwordProvider = Credentials({
 // enriches the session with the member's role + household.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  providers: [...authConfig.providers, passwordProvider],
+  providers: [...authConfig.providers, otpProvider],
   callbacks: {
     ...authConfig.callbacks,
     async signIn({ user, account }) {
@@ -41,8 +42,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await ensureMember(user.email, user.name);
         return true;
       }
-      // Password sign-in already verified the member + password in authorize().
-      if (account?.provider === "password") return true;
+      // OTP sign-in already verified the member + live code in authorize().
+      if (account?.provider === "otp") return true;
       // Allowlist enforcement: only known/active members (or bootstrap admins)
       // may sign in. Returning false sends them to the /no-access page.
       const member = await resolveMemberForAuth(user.email, user.name);

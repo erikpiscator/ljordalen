@@ -1,5 +1,6 @@
 import { signOut } from "@/lib/auth";
 import { BrandMark } from "@/components/brand";
+import { RequestAccess } from "@/components/request-access";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -28,6 +29,8 @@ export default function NoAccessPage() {
               Tillbaka till inloggning
             </Button>
           </form>
+
+          <RequestAccess />
         </CardContent>
       </Card>
     </main>

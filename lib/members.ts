@@ -30,17 +30,9 @@ function adminEmails(): Set<string> {
   return emailSet(process.env.ADMIN_EMAILS);
 }
 
-/** Non-admin emails permitted to sign in; auto-provisioned as regular members. */
-function allowedEmails(): Set<string> {
-  return emailSet(process.env.ALLOWED_EMAILS);
-}
-
-/** The role an email is allowlisted for via env vars, or null if not listed. */
-export function allowlistRole(email: string): Role | null {
-  const n = normalizeEmail(email);
-  if (adminEmails().has(n)) return "admin";
-  if (allowedEmails().has(n)) return "member";
-  return null;
+/** The bootstrap admin emails, normalized — used to seed the first admin(s). */
+export function bootstrapAdminEmails(): string[] {
+  return Array.from(adminEmails());
 }
 
 export async function getMember(email: string): Promise<Member | null> {
@@ -136,9 +128,11 @@ export async function removeMember(email: string): Promise<void> {
 
 /**
  * Resolve the member record at sign-in time, enforcing the allowlist.
- * Auto-provisions an admin record for any email listed in ADMIN_EMAILS so the
- * first family admin can get in before any member exists. Returns null when
- * the email is not allowed (no record and not a bootstrap admin), or inactive.
+ * The allowlist now lives entirely in Firestore: anyone with an active member
+ * record may sign in. As a bootstrap, an admin record is auto-provisioned for
+ * emails listed in ADMIN_EMAILS so the first family admin can get in before any
+ * member exists. Returns null when the email has no active record and isn't a
+ * bootstrap admin.
  */
 export async function resolveMemberForAuth(
   email: string,
@@ -153,13 +147,6 @@ export async function resolveMemberForAuth(
       email: normalized,
       name: name ?? normalized.split("@")[0],
       role: "admin",
-    });
-  }
-  if (allowedEmails().has(normalized)) {
-    return createMember({
-      email: normalized,
-      name: name ?? normalized.split("@")[0],
-      role: "member",
     });
   }
   return null;

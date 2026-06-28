@@ -1,9 +1,9 @@
 import "server-only";
-import { listMembers, notifyAddress } from "./members";
+import { bootstrapAdminEmails, listMembers, notifyAddress } from "./members";
 import { sendEmail } from "./email";
 import { formatStay, nights } from "./dates";
 import { bookingName } from "./format";
-import type { Booking, Member } from "./types";
+import type { AccessRequest, Booking, Member } from "./types";
 
 export type BookingEvent = "created" | "updated" | "cancelled";
 
@@ -86,6 +86,45 @@ export async function notifyBooking(
     to: recipients,
     subject: `${who} ${verb} stugan — ${formatStay(booking.start, booking.end)}`,
     html: renderBookingEmail(event, booking, actor),
+  });
+}
+
+/** The addresses to notify when someone requests access: active admins, plus
+ * the bootstrap ADMIN_EMAILS so the very first admin is reachable too. */
+async function adminRecipients(): Promise<string[]> {
+  const members = await listMembers();
+  const admins = members
+    .filter((m) => m.active && m.role === "admin")
+    .map(notifyAddress);
+  return Array.from(new Set([...admins, ...bootstrapAdminEmails()]));
+}
+
+function renderAccessRequestEmail(req: AccessRequest): string {
+  const note = req.message
+    ? `<p style="margin:8px 0;color:#444"><strong>Meddelande:</strong> ${escapeHtml(req.message)}</p>`
+    : "";
+  return `
+  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
+    <div style="border-left:4px solid #111;padding:4px 16px;margin-bottom:16px">
+      <h2 style="margin:0 0 4px;font-size:18px;color:#111">Ny åtkomstförfrågan</h2>
+      <p style="margin:0;color:#666;font-size:14px">Någon vill gå med i stugkalendern</p>
+    </div>
+    <p style="margin:8px 0;font-size:16px;color:#111"><strong>${escapeHtml(req.name)}</strong></p>
+    <p style="margin:8px 0;color:#444">${escapeHtml(req.email)}</p>
+    ${note}
+    <p style="margin:16px 0 0;color:#666;font-size:13px">Godkänn eller avvisa under Admin → Förfrågningar.</p>
+    ${button()}
+  </div>`;
+}
+
+/** Email the admins that someone has requested access. */
+export async function notifyAccessRequest(req: AccessRequest): Promise<void> {
+  const recipients = await adminRecipients();
+  if (recipients.length === 0) return;
+  await sendEmail({
+    to: recipients,
+    subject: `Åtkomstförfrågan från ${req.name}`,
+    html: renderAccessRequestEmail(req),
   });
 }
 
