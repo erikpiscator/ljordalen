@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import { db, LOGIN_CODES } from "./firebase";
 import { normalizeEmail } from "./members";
 import { sendEmail } from "./email";
+import { appUrl, emailLayout } from "./email-render";
 
 // One-time login codes for passwordless email sign-in. The code is never stored
 // in the clear — only a bcrypt hash, keyed by email, alongside an expiry and an
@@ -73,13 +74,16 @@ export async function sendLoginCodeEmail(
   email: string,
   code: string,
 ): Promise<void> {
-  const html = `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
-    <h2 style="margin:0 0 8px;font-size:18px;color:#111">Din inloggningskod</h2>
-    <p style="margin:0 0 16px;color:#444">Ange den här koden för att logga in på Hoelskogen 52. Den gäller i 10 minuter.</p>
-    <p style="font-size:32px;font-weight:700;letter-spacing:6px;color:#111;margin:0">${code}</p>
-    <p style="margin:16px 0 0;color:#888;font-size:13px">Bad du inte om koden kan du ignorera det här mejlet.</p>
-  </div>`;
+  const html = emailLayout({
+    heading: "Din inloggningskod",
+    subheading: "Ange koden nedan för att logga in. Den gäller i 10 minuter.",
+    bodyHtml: `
+      <div style="margin:4px 0 0;background:#f6f6f4;border:1px solid #ececec;border-radius:10px;padding:18px;text-align:center">
+        <span style="font-size:30px;font-weight:700;letter-spacing:8px;color:#111111;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${code}</span>
+      </div>
+      <p style="margin:14px 0 0;font-size:12px;color:#999999">Bad du inte om koden kan du ignorera det här mejlet.</p>`,
+    cta: { label: "Öppna inloggningen", href: `${appUrl()}/signin` },
+  });
   await sendEmail({
     to: [email],
     subject: "Din inloggningskod till Hoelskogen 52",

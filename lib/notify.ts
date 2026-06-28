@@ -1,30 +1,12 @@
 import "server-only";
 import { bootstrapAdminEmails, listMembers, notifyAddress } from "./members";
 import { sendEmail } from "./email";
+import { appUrl, emailLayout, escapeHtml } from "./email-render";
 import { formatStay, nights } from "./dates";
 import { bookingName } from "./format";
 import type { AccessRequest, Booking, Member } from "./types";
 
 export type BookingEvent = "created" | "updated" | "cancelled";
-
-function appUrl(): string {
-  return (process.env.APP_URL || process.env.AUTH_URL || "http://localhost:3000")
-    .replace(/\/$/, "");
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function button(): string {
-  return `<p style="margin:20px 0 0">
-    <a href="${appUrl()}" style="background:#111;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;font-size:14px">Öppna kalendern</a>
-  </p>`;
-}
 
 function renderBookingEmail(
   event: BookingEvent,
@@ -40,31 +22,28 @@ function renderBookingEmail(
         : `${who} avbokade en bokning`;
   const n = nights(booking.start, booking.end);
   const note = booking.note
-    ? `<p style="margin:8px 0;color:#444"><strong>Notering:</strong> ${escapeHtml(booking.note)}</p>`
+    ? `<p style="margin:10px 0 0;color:#444444;font-size:14px"><strong>Notering:</strong> ${escapeHtml(booking.note)}</p>`
     : "";
-  return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
-    <div style="border-left:4px solid ${actor.color};padding:4px 16px;margin-bottom:16px">
-      <h2 style="margin:0 0 4px;font-size:18px;color:#111">${headline}</h2>
-      <p style="margin:0;color:#666;font-size:14px">${escapeHtml(actor.name)}</p>
-    </div>
-    <p style="margin:8px 0;font-size:16px;color:#111"><strong>${formatStay(booking.start, booking.end)}</strong></p>
-    <p style="margin:8px 0;color:#444">${n} ${n === 1 ? "natt" : "nätter"}</p>
-    ${note}
-    ${button()}
-  </div>`;
+  return emailLayout({
+    heading: headline,
+    subheading: escapeHtml(actor.name),
+    accent: actor.color,
+    bodyHtml: `
+      <p style="margin:0;font-size:16px;color:#111111"><strong>${formatStay(booking.start, booking.end)}</strong></p>
+      <p style="margin:6px 0 0;color:#666666;font-size:14px">${n} ${n === 1 ? "natt" : "nätter"}</p>
+      ${note}`,
+    cta: { label: "Öppna kalendern" },
+  });
 }
 
 function renderAnnouncementEmail(author: Member, body: string): string {
-  return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
-    <div style="border-left:4px solid ${author.color};padding:4px 16px;margin-bottom:16px">
-      <h2 style="margin:0 0 4px;font-size:18px;color:#111">Nytt anslag</h2>
-      <p style="margin:0;color:#666;font-size:14px">${escapeHtml(author.name)}</p>
-    </div>
-    <p style="margin:8px 0;white-space:pre-wrap;color:#222">${escapeHtml(body)}</p>
-    ${button()}
-  </div>`;
+  return emailLayout({
+    heading: "Nytt anslag",
+    subheading: escapeHtml(author.name),
+    accent: author.color,
+    bodyHtml: `<p style="margin:0;white-space:pre-wrap;color:#333333;font-size:15px;line-height:1.6">${escapeHtml(body)}</p>`,
+    cta: { label: "Öppna kalendern" },
+  });
 }
 
 /** Email all other active members about a booking change. */
@@ -107,20 +86,17 @@ async function adminRecipients(): Promise<string[]> {
 
 function renderAccessRequestEmail(req: AccessRequest): string {
   const note = req.message
-    ? `<p style="margin:8px 0;color:#444"><strong>Meddelande:</strong> ${escapeHtml(req.message)}</p>`
+    ? `<p style="margin:10px 0 0;color:#444444;font-size:14px"><strong>Meddelande:</strong> ${escapeHtml(req.message)}</p>`
     : "";
-  return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
-    <div style="border-left:4px solid #111;padding:4px 16px;margin-bottom:16px">
-      <h2 style="margin:0 0 4px;font-size:18px;color:#111">Ny åtkomstförfrågan</h2>
-      <p style="margin:0;color:#666;font-size:14px">Någon vill gå med i stugkalendern</p>
-    </div>
-    <p style="margin:8px 0;font-size:16px;color:#111"><strong>${escapeHtml(req.name)}</strong></p>
-    <p style="margin:8px 0;color:#444">${escapeHtml(req.email)}</p>
-    ${note}
-    <p style="margin:16px 0 0;color:#666;font-size:13px">Godkänn eller avvisa under Admin → Förfrågningar.</p>
-    ${button()}
-  </div>`;
+  return emailLayout({
+    heading: "Ny åtkomstförfrågan",
+    subheading: "Någon vill gå med i stugkalendern",
+    bodyHtml: `
+      <p style="margin:0;font-size:16px;color:#111111"><strong>${escapeHtml(req.name)}</strong></p>
+      <p style="margin:4px 0 0;color:#666666;font-size:14px">${escapeHtml(req.email)}</p>
+      ${note}`,
+    cta: { label: "Granska i admin", href: `${appUrl()}/admin` },
+  });
 }
 
 /** Email the admins that someone has requested access. */
@@ -135,15 +111,12 @@ export async function notifyAccessRequest(req: AccessRequest): Promise<void> {
 }
 
 function renderAccessApprovedEmail(name: string): string {
-  return `
-  <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto">
-    <div style="border-left:4px solid #111;padding:4px 16px;margin-bottom:16px">
-      <h2 style="margin:0 0 4px;font-size:18px;color:#111">Du är inne!</h2>
-      <p style="margin:0;color:#666;font-size:14px">Hej ${escapeHtml(name)}</p>
-    </div>
-    <p style="margin:8px 0;color:#444">Din åtkomst till stugkalendern är godkänd. Logga in med Google eller med en e-postkod för att komma igång.</p>
-    ${button()}
-  </div>`;
+  return emailLayout({
+    heading: "Du är inne!",
+    subheading: `Hej ${escapeHtml(name)}`,
+    bodyHtml: `<p style="margin:0;color:#444444;font-size:15px;line-height:1.6">Din åtkomst till stugkalendern är godkänd. Logga in med Google eller med en e-postkod för att komma igång.</p>`,
+    cta: { label: "Logga in", href: `${appUrl()}/signin` },
+  });
 }
 
 /** Tell a requester their access was approved and they can sign in now. */

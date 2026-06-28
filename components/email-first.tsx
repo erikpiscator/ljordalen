@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requestLoginCodeAction } from "@/app/actions/login";
 import { RequestAccess } from "@/components/request-access";
+import { OtpInput } from "@/components/otp-input";
 
 /**
  * Email-first, passwordless sign-in: the person enters their address, we email
@@ -47,11 +48,14 @@ export function EmailFirst() {
     }
   }
 
-  async function onVerify(e: React.FormEvent) {
-    e.preventDefault();
+  // Takes the code explicitly so auto-submit can pass the freshly-completed
+  // value without waiting for the `code` state to flush. The `busy` guard stops
+  // a double submit when auto-complete and the button race.
+  async function verify(theCode: string) {
+    if (theCode.length < 6 || busy) return;
     setBusy(true);
     try {
-      const res = await signIn("otp", { email, code, redirect: false });
+      const res = await signIn("otp", { email, code: theCode, redirect: false });
       if (res?.error) {
         toast.error("Fel eller utgången kod.");
         return;
@@ -138,27 +142,24 @@ export function EmailFirst() {
 
   if (step.name === "code") {
     return (
-      <form onSubmit={onVerify} className="mt-4 space-y-2 border-t pt-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          verify(code);
+        }}
+        className="mt-4 space-y-3 border-t pt-4"
+      >
         {emailRow}
         <p className="text-center text-xs text-muted-foreground">
           Vi har mejlat en inloggningskod. Ange den här.
         </p>
-        <div className="space-y-1">
-          <Label htmlFor="ef-code" className="text-xs">
-            Inloggningskod
-          </Label>
-          <Input
-            id="ef-code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            autoFocus
-            placeholder="••••••"
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            required
-          />
-        </div>
+        <OtpInput
+          value={code}
+          onChange={setCode}
+          onComplete={(v) => verify(v)}
+          disabled={busy}
+          autoFocus
+        />
         <Button
           type="submit"
           variant="secondary"
