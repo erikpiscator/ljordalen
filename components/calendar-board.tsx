@@ -262,8 +262,6 @@ export function CalendarBoard({
                     <MemberAvatar
                       avatar={arriving.member.avatar}
                       name={arriving.member.name}
-                      color={arriving.member.color}
-                      ring
                       className="size-5 shrink-0"
                     />
                     <span className="min-w-0 truncate text-xs font-medium">
