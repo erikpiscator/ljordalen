@@ -4,7 +4,7 @@ import type { BookingWithMember } from "@/lib/types";
 const fmtYear = (d: Date) => d.getFullYear();
 
 interface Row {
-  household: string;
+  name: string;
   color: string;
   nights: number;
 }
@@ -21,29 +21,29 @@ export function UsageOverview({
 }) {
   const year = fmtYear(new Date());
 
-  const byHousehold = new Map<string, Row>();
+  const byMember = new Map<string, Row>();
   for (const b of bookings) {
     let d = parseISO(b.start);
     const end = parseISO(b.end);
     while (d < end) {
       if (fmtYear(d) === year) {
-        const household = b.member?.household || b.household || "No family yet";
+        const key = b.memberEmail;
         const row =
-          byHousehold.get(household) ??
+          byMember.get(key) ??
           {
-            household,
+            name: b.member?.name ?? "Okänd",
             color: b.member?.color ?? "#888888",
             nights: 0,
           };
         row.nights += 1;
-        byHousehold.set(household, row);
+        byMember.set(key, row);
       }
       d = addDays(d, 1);
     }
   }
 
-  const rows = [...byHousehold.values()].sort((a, b) =>
-    a.household.localeCompare(b.household),
+  const rows = [...byMember.values()].sort((a, b) =>
+    a.name.localeCompare(b.name),
   );
   const total = rows.reduce((sum, r) => sum + r.nights, 0);
   const max = Math.max(1, ...rows.map((r) => r.nights));
@@ -67,10 +67,8 @@ export function UsageOverview({
       </div>
       <div className="space-y-2.5">
         {rows.map((r) => (
-          <div key={r.household} className="flex items-center gap-3">
-            <span className="w-28 shrink-0 truncate text-sm">
-              {r.household}
-            </span>
+          <div key={r.name} className="flex items-center gap-3">
+            <span className="w-28 shrink-0 truncate text-sm">{r.name}</span>
             <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full"

@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { currentMember, requireAdmin, requireMember } from "@/lib/session";
+import { requireAdmin, requireMember } from "@/lib/session";
 import {
   createMember,
   getMember,
@@ -8,7 +8,6 @@ import {
   removeMember,
   updateMember,
 } from "@/lib/members";
-import { ensureHouseholdColor, setHouseholdColor } from "@/lib/households";
 import { PRESET_IDS } from "@/lib/avatars";
 import type { Role } from "@/lib/types";
 
@@ -53,28 +52,11 @@ export async function setNotifyEmailAction(email: string): Promise<Result> {
   return { ok: true };
 }
 
-/** A member joins an existing family or creates a new one (just a name). */
-export async function setHouseholdAction(household: string): Promise<Result> {
-  const member = await requireMember();
-  const h = household.trim();
-  if (!h) return { ok: false, error: "Ange ett familjenamn." };
-  if (h.length > 40) return { ok: false, error: "Det familjenamnet är för långt." };
-  // Joining a household adopts its shared color (or starts a new one).
-  const color = await ensureHouseholdColor(h);
-  await updateMember(member.email, { household: h, color });
-  revalidatePath("/profile");
-  revalidatePath("/");
-  revalidatePath("/family");
-  revalidatePath("/bookings");
-  return { ok: true };
-}
-
 // --- Admin: family management --------------------------------------------
 
 export async function addMemberAction(input: {
   email: string;
   name: string;
-  household?: string;
   role?: Role;
 }): Promise<Result> {
   await requireAdmin();
@@ -91,13 +73,8 @@ export async function addMemberAction(input: {
   await createMember({
     email,
     name: input.name,
-    household: input.household,
     role: input.role,
   });
-  if (input.household?.trim()) {
-    const color = await ensureHouseholdColor(input.household);
-    await updateMember(email, { color });
-  }
   revalidatePath("/admin");
   revalidatePath("/family");
   return { ok: true };
@@ -107,7 +84,6 @@ export async function updateMemberAction(
   email: string,
   patch: Partial<{
     name: string;
-    household: string;
     color: string;
     role: Role;
     active: boolean;
@@ -130,22 +106,6 @@ export async function updateMemberAction(
   revalidatePath("/admin");
   revalidatePath("/family");
   revalidatePath("/");
-  return { ok: true };
-}
-
-/** Set a household's shared color (applies to everyone in it). */
-export async function setHouseholdColorAction(
-  household: string,
-  color: string,
-): Promise<Result> {
-  await requireAdmin();
-  const h = household.trim();
-  if (!h) return { ok: false, error: "Den medlemmen har ingen familj än." };
-  await setHouseholdColor(h, color);
-  revalidatePath("/admin");
-  revalidatePath("/family");
-  revalidatePath("/");
-  revalidatePath("/bookings");
   return { ok: true };
 }
 

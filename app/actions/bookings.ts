@@ -41,7 +41,6 @@ export async function createBookingAction(
       start: input.start,
       end: input.end,
       memberEmail: member.email,
-      household: member.household,
       note: (input.note ?? "").trim(),
     });
     await notifyBooking("created", booking, member);
@@ -83,7 +82,6 @@ export async function updateBookingAction(
       start: input.start,
       end: input.end,
       memberEmail: existing.memberEmail,
-      household: existing.household,
       note: (input.note ?? "").trim(),
     });
     // Only notify everyone when the stay's dates actually move — note-only or

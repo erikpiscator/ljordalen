@@ -1,4 +1,4 @@
-// Household color palette. Kept in its own module (no server-only deps) so it
+// Member color palette. Kept in its own module (no server-only deps) so it
 // can be imported by both server code and client components.
 export const PALETTE = [
   "#E8763A", // warm orange

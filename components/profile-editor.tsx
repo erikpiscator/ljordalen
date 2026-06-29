@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  setHouseholdAction,
   setNotifyEmailAction,
   setPresetAvatarAction,
   updateOwnProfileAction,
@@ -22,26 +21,20 @@ import type { Avatar } from "@/lib/types";
 export function ProfileEditor({
   email,
   name: initialName,
-  household: initialHousehold,
   notifyEmail: initialNotifyEmail,
   color,
   avatar,
-  households,
 }: {
   email: string;
   name: string;
-  household: string;
   notifyEmail: string;
   color: string;
   avatar: Avatar;
-  households: string[];
 }) {
   const router = useRouter();
   const [name, setName] = React.useState(initialName);
-  const [household, setHousehold] = React.useState(initialHousehold);
   const [notifyEmail, setNotifyEmail] = React.useState(initialNotifyEmail);
   const [savingName, startSaveName] = React.useTransition();
-  const [savingHouse, startSaveHouse] = React.useTransition();
   const [savingNotify, startSaveNotify] = React.useTransition();
   const [pickingPreset, startPreset] = React.useTransition();
   const [uploading, setUploading] = React.useState(false);
@@ -52,16 +45,6 @@ export function ProfileEditor({
       const res = await updateOwnProfileAction({ name });
       if (res.ok) {
         toast.success("Namnet sparat.");
-        router.refresh();
-      } else toast.error(res.error);
-    });
-  }
-
-  function saveHousehold() {
-    startSaveHouse(async () => {
-      const res = await setHouseholdAction(household);
-      if (res.ok) {
-        toast.success("Familjen sparad.");
         router.refresh();
       } else toast.error(res.error);
     });
@@ -124,11 +107,7 @@ export function ProfileEditor({
               className="size-20"
             />
             <div className="text-sm">
-              <div className="font-medium">
-                {initialHousehold || (
-                  <span className="text-muted-foreground">Ingen familj än</span>
-                )}
-              </div>
+              <div className="font-medium">{name}</div>
               <div className="text-muted-foreground">{email}</div>
             </div>
           </div>
@@ -149,38 +128,6 @@ export function ProfileEditor({
                 Spara
               </Button>
             </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="household">Familj</Label>
-            <div className="flex gap-2">
-              <Input
-                id="household"
-                list="household-options"
-                value={household}
-                onChange={(e) => setHousehold(e.target.value)}
-                placeholder="Gå med i en, eller skriv ett nytt familjenamn"
-                className="max-w-xs"
-              />
-              <datalist id="household-options">
-                {households.map((h) => (
-                  <option key={h} value={h} />
-                ))}
-              </datalist>
-              <Button
-                onClick={saveHousehold}
-                disabled={
-                  savingHouse ||
-                  !household.trim() ||
-                  household.trim() === initialHousehold.trim()
-                }
-              >
-                Spara
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Välj din familj i listan, eller skriv ett nytt namn för att skapa en.
-            </p>
           </div>
 
           <div className="space-y-1.5">

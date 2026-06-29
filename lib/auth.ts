@@ -29,7 +29,7 @@ const otpProvider = Credentials({
 });
 
 // Node-runtime NextAuth instance. Adds the Firestore-backed allowlist gate and
-// enriches the session with the member's role + household.
+// enriches the session with the member's role.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [...authConfig.providers, otpProvider],
@@ -58,7 +58,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.email = member.email;
           token.name = member.name;
           token.role = member.role;
-          token.household = member.household;
         }
       }
       return token;
@@ -68,7 +67,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (token.email) session.user.email = token.email;
         session.user.name = (token.name as string) ?? session.user.name;
         session.user.role = (token.role as Role) ?? "member";
-        session.user.household = (token.household as string) ?? "";
       }
       return session;
     },

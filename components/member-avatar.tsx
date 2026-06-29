@@ -16,7 +16,7 @@ function initials(name: string): string {
 /**
  * A member's avatar rendered as a circle. Uploaded photos use AvatarImage (with
  * an initials fallback); preset animals render as inline pixel-art SVG. Pass a
- * `color` to draw a thin household-colored ring.
+ * `color` to draw a thin member-colored ring.
  */
 export function MemberAvatar({
   avatar,
