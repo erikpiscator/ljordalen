@@ -256,13 +256,17 @@ export function CalendarBoard({
                   {format(day, "d")}
                 </span>
                 {arriving && arriving.member && (
-                  <div className="flex items-center gap-1 overflow-hidden">
+                  // Anchored to the arriving (right/afternoon) half so the label
+                  // sits on this stay's colour, not the departing half's.
+                  <div className="mt-auto flex items-center justify-end gap-1 overflow-hidden">
                     <MemberAvatar
                       avatar={arriving.member.avatar}
                       name={arriving.member.name}
+                      color={arriving.member.color}
+                      ring
                       className="size-5 shrink-0"
                     />
-                    <span className="truncate text-xs font-medium">
+                    <span className="min-w-0 truncate text-xs font-medium">
                       {bookingName(arriving.member)}
                     </span>
                   </div>
