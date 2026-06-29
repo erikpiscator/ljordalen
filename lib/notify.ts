@@ -6,6 +6,12 @@ import { formatStay, nights } from "./dates";
 import { bookingName } from "./format";
 import type { AccessRequest, Booking, Member } from "./types";
 
+/** Shorten a body to a one-line preview for email context. */
+function snippet(text: string, max = 140): string {
+  const oneLine = text.replace(/\s+/g, " ").trim();
+  return oneLine.length > max ? `${oneLine.slice(0, max - 1)}…` : oneLine;
+}
+
 export type BookingEvent = "created" | "updated" | "cancelled";
 
 function renderBookingEmail(
@@ -146,5 +152,50 @@ export async function notifyAnnouncement(
     to: recipients,
     subject: `Nytt anslag från ${author.name}`,
     html: renderAnnouncementEmail(author, body),
+  });
+}
+
+function renderCommentEmail(
+  author: Member,
+  commentBody: string,
+  postSnippet: string,
+): string {
+  return emailLayout({
+    heading: "Ny kommentar",
+    subheading: escapeHtml(author.name),
+    accent: author.color,
+    bodyHtml: `
+      <p style="margin:0 0 12px;color:#888888;font-size:13px">På anslaget: <em>${escapeHtml(postSnippet)}</em></p>
+      <p style="margin:0;white-space:pre-wrap;color:#333333;font-size:15px;line-height:1.6">${escapeHtml(commentBody)}</p>`,
+    cta: { label: "Öppna anslag", href: `${appUrl()}/announcements` },
+  });
+}
+
+/**
+ * Email the people involved in a thread about a new comment: the announcement
+ * author plus everyone who has already commented. `recipientEmails` are member
+ * login emails; the comment author is excluded and addresses are resolved
+ * through each member's notis-e-post.
+ */
+export async function notifyComment(
+  author: Member,
+  commentBody: string,
+  announcementBody: string,
+  recipientEmails: string[],
+): Promise<void> {
+  const wanted = new Set(recipientEmails);
+  wanted.delete(author.email);
+  if (wanted.size === 0) return;
+
+  const members = await listMembers();
+  const recipients = members
+    .filter((m) => m.active && wanted.has(m.email))
+    .map(notifyAddress);
+  if (recipients.length === 0) return;
+
+  await sendEmail({
+    to: recipients,
+    subject: `${author.name} kommenterade ett anslag`,
+    html: renderCommentEmail(author, commentBody, snippet(announcementBody)),
   });
 }

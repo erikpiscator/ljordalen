@@ -56,6 +56,46 @@ export interface AccessRequest {
   createdAt: number;
 }
 
+/**
+ * A comment on an announcement. Stored under
+ * `announcements/{announcementId}/comments/{id}`. Threading is by `parentId`:
+ * null for a top-level comment, otherwise the id of the comment it replies to.
+ */
+export interface Comment {
+  id: string;
+  authorEmail: string;
+  body: string;
+  /** Parent comment id, or null for a top-level comment. */
+  parentId: string | null;
+  createdAt: number;
+  /** Set when the body was edited. */
+  editedAt?: number;
+  /**
+   * Soft-delete tombstone: a deleted comment that still has replies is kept
+   * (body cleared) so its children remain reachable, Reddit-style.
+   */
+  deleted?: boolean;
+}
+
+/** What a reaction is attached to: the announcement itself, or a comment. */
+export type ReactionTarget = "post" | "comment";
+
+/**
+ * An emoji reaction. Stored under `announcements/{announcementId}/reactions/{id}`
+ * for both the post and its comments, so one query loads the whole thread's
+ * reactions. The doc id is deterministic (`${targetId}__${email}__${emoji}`) so
+ * toggling is idempotent.
+ */
+export interface Reaction {
+  id: string;
+  targetType: ReactionTarget;
+  /** "post" id for the announcement, or the comment id. */
+  targetId: string;
+  memberEmail: string;
+  emoji: string;
+  createdAt: number;
+}
+
 /** Admin-configurable booking rules. 0 means "no limit". */
 export interface BookingSettings {
   /** Max nights per stay for members (admins are exempt). */
