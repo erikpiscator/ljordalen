@@ -203,6 +203,22 @@ export function CalendarBoard({
             const leaving = departures.get(dateStr);
             const arriving = night && night.start === dateStr ? night : null;
             const staying = night && !arriving ? night : null;
+
+            // Exactly one avatar + name per booking, placed on the *booked run*
+            // rather than the arrival half (where it would spill across the
+            // split into the departing colour). The first full night is a whole
+            // cell of the stay's colour, so the label fits cleanly. A
+            // single-night stay has no full night, so it falls back to arrival.
+            const isFirstFullNight =
+              !!staying && staying.start === fmt(addDays(day, -1));
+            const isSingleNight =
+              !!arriving && arriving.end === fmt(addDays(day, 1));
+            const labelMember = isFirstFullNight
+              ? staying!.member
+              : isSingleNight
+                ? arriving!.member
+                : null;
+
             const inMonth = isSameMonth(day, month);
             const past = dateStr < todayStr;
             const clickable = night || !past;
@@ -255,15 +271,23 @@ export function CalendarBoard({
                 >
                   {format(day, "d")}
                 </span>
-                {arriving && arriving.member && (
-                  <div className="flex items-center gap-1 overflow-hidden">
+                {labelMember && (
+                  // The booking's single avatar + name. On a full booked cell it
+                  // sits left; on a single-night arrival (right/afternoon half
+                  // only) it hugs the right so it stays on the booked colour.
+                  <div
+                    className={cn(
+                      "mt-auto flex items-center gap-1 overflow-hidden",
+                      isSingleNight && "justify-end",
+                    )}
+                  >
                     <MemberAvatar
-                      avatar={arriving.member.avatar}
-                      name={arriving.member.name}
+                      avatar={labelMember.avatar}
+                      name={labelMember.name}
                       className="size-5 shrink-0"
                     />
-                    <span className="truncate text-xs font-medium">
-                      {bookingName(arriving.member)}
+                    <span className="min-w-0 truncate text-xs font-medium">
+                      {bookingName(labelMember)}
                     </span>
                   </div>
                 )}
