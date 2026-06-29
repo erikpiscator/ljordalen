@@ -85,7 +85,6 @@ export function formatStay(start: string, end: string): string {
       month: "short",
       ...(withYear ? { year: "numeric" } : {}),
     }).format(parseDateStr(s));
-  // The displayed last night is the day before the exclusive end.
-  const lastNight = addDays(end, -1);
-  return `${fmt(start)} – ${fmt(lastNight, true)}`;
+  // `end` is the exclusive departure day — show it as the checkout date.
+  return `${fmt(start)} – ${fmt(end, true)}`;
 }

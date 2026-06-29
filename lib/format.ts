@@ -1,9 +1,8 @@
-// The label shown for a booking: the family/household name when the person
-// belongs to one, otherwise just their own name. Pure (client + server safe).
+// The label shown for a booking: the member's own name. Pure (client + server
+// safe). Kept as a helper so callers don't each repeat the null fallback.
 export function bookingName(
-  member: { name: string; household?: string } | null,
+  member: { name: string } | null,
   fallback = "",
 ): string {
-  if (!member) return fallback;
-  return member.household?.trim() || member.name;
+  return member?.name ?? fallback;
 }

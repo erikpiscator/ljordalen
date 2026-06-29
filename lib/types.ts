@@ -16,8 +16,7 @@ export interface Member {
   /** Optional alternative email for notifications (falls back to `email`). */
   notifyEmail?: string;
   name: string;
-  household: string;
-  /** Hex color used to identify this member/household across the UI. */
+  /** Hex color used to identify this member across the UI. */
   color: string;
   role: Role;
   active: boolean;
@@ -33,7 +32,6 @@ export interface Booking {
   /** Departure day, EXCLUSIVE — "YYYY-MM-DD". */
   end: string;
   memberEmail: string;
-  household: string;
   note: string;
   createdAt: number;
   updatedAt: number;
@@ -41,7 +39,7 @@ export interface Booking {
 
 /** A booking enriched with its owner's display info for rendering. */
 export interface BookingWithMember extends Booking {
-  member: Pick<Member, "name" | "color" | "avatar" | "household"> | null;
+  member: Pick<Member, "name" | "color" | "avatar"> | null;
 }
 
 /**

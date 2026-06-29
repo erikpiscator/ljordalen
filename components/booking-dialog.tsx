@@ -56,8 +56,8 @@ export function BookingDialog({
   settings,
   onDone,
 }: BookingDialogProps) {
-  // Convert the half-open stored range into an inclusive from..to for display:
-  // the visible "to" is the last night = end - 1 day.
+  // The picker's "to" is the departure day = the exclusive end, so the stored
+  // half-open range maps straight onto from..to with no off-by-one.
   const [range, setRange] = React.useState<DateRange | undefined>();
   const [note, setNote] = React.useState(initial.note);
   const [pending, startTransition] = React.useTransition();
@@ -67,7 +67,7 @@ export function BookingDialog({
     if (open) {
       setRange({
         from: parseISO(initial.start),
-        to: addDays(parseISO(initial.end), -1),
+        to: parseISO(initial.end),
       });
       setNote(initial.note);
     }
@@ -77,27 +77,53 @@ export function BookingDialog({
 
   const latestArrival = maxArrivalDate(settings);
 
-  // Disable past days, any night already taken, and days beyond the
-  // advance-booking window.
-  const disabled = React.useMemo(() => {
-    const taken = (day: Date) => {
+  // A night already taken by another booking (self excluded when editing).
+  const isBookedNight = React.useCallback(
+    (day: Date) => {
       const d = fmt(day);
       return bookings.some(
         (b) => b.id !== bookingId && d >= b.start && d < b.end,
       );
-    };
-    const matchers: import("react-day-picker").Matcher[] = [
-      { before: today },
-      taken,
-    ];
+    },
+    [bookings, bookingId],
+  );
+
+  // Only hard limits are disabled. Occupancy is enforced in handleSelect instead
+  // of via `disabled`, so a checkout day may still land on the day another stay
+  // begins (same-day handover) — its first night isn't part of this range.
+  const disabled = React.useMemo(() => {
+    const matchers: import("react-day-picker").Matcher[] = [{ before: today }];
     if (latestArrival) matchers.push({ after: parseISO(latestArrival) });
     return matchers;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookings, bookingId, latestArrival]);
+  }, [latestArrival]);
 
+  function rangeHasConflict(from: Date, to: Date): boolean {
+    const n = differenceInCalendarDays(to, from);
+    for (let i = 0; i < n; i++) {
+      if (isBookedNight(addDays(from, i))) return true;
+    }
+    return false;
+  }
+
+  function handleSelect(r: DateRange | undefined) {
+    if (
+      r?.from &&
+      r?.to &&
+      differenceInCalendarDays(r.to, r.from) > 0 &&
+      rangeHasConflict(r.from, r.to)
+    ) {
+      toast.error("Perioden krockar med en annan bokning. Välj på nytt.");
+      setRange(undefined);
+      return;
+    }
+    setRange(r);
+  }
+
+  // `to` is the departure day (exclusive), so nights = whole days between.
   const nightCount =
     range?.from && range?.to
-      ? differenceInCalendarDays(range.to, range.from) + 1
+      ? differenceInCalendarDays(range.to, range.from)
       : 0;
 
   const overMax = settings.maxNights > 0 && nightCount > settings.maxNights;
@@ -117,7 +143,7 @@ export function BookingDialog({
     }
     const input: BookingFormInput = {
       start: fmt(range.from),
-      end: fmt(addDays(range.to, 1)), // back to exclusive end
+      end: fmt(range.to), // `to` is already the exclusive departure day
       note,
     };
     startTransition(async () => {
@@ -152,9 +178,13 @@ export function BookingDialog({
             mode="range"
             required={false}
             selected={range}
-            onSelect={setRange}
+            onSelect={handleSelect}
             disabled={disabled}
-            excludeDisabled
+            modifiers={{ booked: isBookedNight }}
+            modifiersClassNames={{
+              booked:
+                "[&_button]:line-through [&_button]:text-muted-foreground [&_button]:opacity-50",
+            }}
             weekStartsOn={1}
             numberOfMonths={1}
             defaultMonth={parseISO(initial.start)}

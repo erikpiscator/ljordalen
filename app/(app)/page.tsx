@@ -39,18 +39,21 @@ export default async function HomePage() {
   const latestAnnouncement = announcements[0] ?? null;
 
   const yearBookings = bookings.filter((b) => b.start.startsWith(thisYear));
-  const householdMap = new Map<string, { nights: number; color: string }>();
+  const memberMap = new Map<
+    string,
+    { name: string; nights: number; color: string }
+  >();
   for (const b of yearBookings) {
     const n = nights(b.start, b.end);
     const color = b.member?.color ?? "#888";
-    const name = b.household || "Okänd";
-    const prev = householdMap.get(name);
+    const name = b.member?.name ?? "Okänd";
+    const prev = memberMap.get(b.memberEmail);
     if (prev) prev.nights += n;
-    else householdMap.set(name, { nights: n, color });
+    else memberMap.set(b.memberEmail, { name, nights: n, color });
   }
-  const stats = Array.from(householdMap.entries())
-    .map(([name, d]) => ({ name, ...d }))
-    .sort((a, b) => b.nights - a.nights);
+  const stats = Array.from(memberMap.values()).sort(
+    (a, b) => b.nights - a.nights,
+  );
   const maxNights = stats[0]?.nights ?? 1;
 
   const showMyNext =

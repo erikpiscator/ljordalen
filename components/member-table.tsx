@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   addMemberAction,
   removeMemberAction,
-  setHouseholdColorAction,
   updateMemberAction,
 } from "@/app/actions/members";
 import { PALETTE } from "@/lib/colors";
@@ -42,17 +41,15 @@ function AddMember() {
   const router = useRouter();
   const [email, setEmail] = React.useState("");
   const [name, setName] = React.useState("");
-  const [household, setHousehold] = React.useState("");
   const [pending, start] = React.useTransition();
 
   function submit() {
     start(async () => {
-      const res = await addMemberAction({ email, name, household });
+      const res = await addMemberAction({ email, name });
       if (res.ok) {
         toast.success(`${name || email} tillagd.`);
         setEmail("");
         setName("");
-        setHousehold("");
         router.refresh();
       } else toast.error(res.error);
     });
@@ -64,7 +61,7 @@ function AddMember() {
         <CardTitle className="text-base">Lägg till en familjemedlem</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="m-email">Google-e-post</Label>
             <Input
@@ -84,20 +81,6 @@ function AddMember() {
               onChange={(e) => setName(e.target.value)}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="m-house">
-              Familj{" "}
-              <span className="font-normal text-muted-foreground">
-                (valfritt)
-              </span>
-            </Label>
-            <Input
-              id="m-house"
-              placeholder="De kan välja själva senare"
-              value={household}
-              onChange={(e) => setHousehold(e.target.value)}
-            />
-          </div>
         </div>
         <div className="mt-3 flex justify-end">
           <Button onClick={submit} disabled={pending || !email || !name}>
@@ -112,7 +95,6 @@ function AddMember() {
 function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
   const router = useRouter();
   const [name, setName] = React.useState(member.name);
-  const [household, setHousehold] = React.useState(member.household);
   const [pending, start] = React.useTransition();
 
   const [confirmingRemove, setConfirmingRemove] = React.useState(false);
@@ -129,11 +111,7 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
 
   function setColor(c: string) {
     start(async () => {
-      // Color belongs to the household; for an unassigned member fall back
-      // to setting just their own color.
-      const res = member.household.trim()
-        ? await setHouseholdColorAction(member.household, c)
-        : await updateMemberAction(member.email, { color: c });
+      const res = await updateMemberAction(member.email, { color: c });
       if (res.ok) router.refresh();
       else toast.error(res.error);
     });
@@ -150,7 +128,6 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
   }
 
   const nameDirty = name.trim() !== member.name;
-  const houseDirty = household.trim() !== member.household;
 
   return (
     <Card className={cn(!member.active && "opacity-60")}>
@@ -162,20 +139,15 @@ function MemberRow({ member, isSelf }: { member: Member; isSelf: boolean }) {
           ring
         />
 
-        <div className="grid flex-1 gap-2 sm:grid-cols-2">
+        <div className="flex-1">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => nameDirty && save({ name: name.trim() })}
           />
-          <Input
-            value={household}
-            onChange={(e) => setHousehold(e.target.value)}
-            onBlur={() => houseDirty && save({ household: household.trim() })}
-          />
         </div>
 
-        <div className="flex items-center gap-1.5" title="Familjens färg">
+        <div className="flex items-center gap-1.5" title="Medlemmens färg">
           {PALETTE.map((c) => (
             <button
               key={c}

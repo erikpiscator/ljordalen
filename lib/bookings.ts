@@ -17,7 +17,6 @@ function docToBooking(id: string, data: FirebaseFirestore.DocumentData): Booking
     start: data.start,
     end: data.end,
     memberEmail: data.memberEmail,
-    household: data.household,
     note: data.note ?? "",
     createdAt: data.createdAt ?? 0,
     updatedAt: data.updatedAt ?? 0,
@@ -61,9 +60,7 @@ export async function withMembers(
     const m = byEmail.get(b.memberEmail);
     return {
       ...b,
-      member: m
-        ? { name: m.name, color: m.color, avatar: m.avatar, household: m.household }
-        : null,
+      member: m ? { name: m.name, color: m.color, avatar: m.avatar } : null,
     };
   });
 }
@@ -72,7 +69,6 @@ export interface BookingInput {
   start: string;
   end: string;
   memberEmail: string;
-  household: string;
   note?: string;
 }
 
@@ -117,7 +113,6 @@ async function writeBooking(
         start: input.start,
         end: input.end,
         memberEmail: input.memberEmail,
-        household: input.household,
         note: input.note ?? "",
         createdAt: now,
         updatedAt: now,

@@ -83,6 +83,15 @@ export function CalendarBoard({
     return map;
   }, [bookings]);
 
+  // dateStr -> the booking that checks out that morning (its exclusive end).
+  // A checkout day is free for nights, so it can coincide with another stay's
+  // arrival — that's the same-day handover we render as a split cell.
+  const departures = React.useMemo(() => {
+    const map = new Map<string, BookingWithMember>();
+    for (const b of bookings) map.set(b.end, b);
+    return map;
+  }, [bookings]);
+
   const todayStr = fmt(new Date());
 
   function openCreate(start: string) {
@@ -190,33 +199,49 @@ export function CalendarBoard({
         <div className="grid grid-cols-7">
           {days.map((day) => {
             const dateStr = fmt(day);
-            const occupant = occupancy.get(dateStr);
+            const night = occupancy.get(dateStr);
+            const leaving = departures.get(dateStr);
+            const arriving = night && night.start === dateStr ? night : null;
+            const staying = night && !arriving ? night : null;
             const inMonth = isSameMonth(day, month);
             const past = dateStr < todayStr;
-            const isArrival = occupant?.start === dateStr;
-            const color = occupant?.member?.color ?? "#888";
-            const clickable = occupant || !past;
+            const clickable = night || !past;
+
+            // Present all day -> solid tint. Otherwise the morning (checkout)
+            // and afternoon (arrival) halves each get their booking's tint, so
+            // a same-day handover reads as a split cell.
+            const tint = (b?: BookingWithMember | null) =>
+              `${b?.member?.color ?? "#888"}22`;
+            let background: string | undefined;
+            if (staying) {
+              background = tint(staying);
+            } else if (leaving || arriving) {
+              background = `linear-gradient(to right, ${
+                leaving ? tint(leaving) : "transparent"
+              } 0 50%, ${arriving ? tint(arriving) : "transparent"} 50% 100%)`;
+            }
+
+            const title =
+              [
+                leaving && `${bookingName(leaving.member)} reser`,
+                arriving && `${bookingName(arriving.member)} anländer`,
+              ]
+                .filter(Boolean)
+                .join(" · ") || undefined;
+
             return (
               <button
                 key={dateStr}
                 type="button"
                 disabled={!clickable}
-                onClick={() => onDayClick(dateStr, occupant)}
-                style={
-                  occupant
-                    ? {
-                        backgroundColor: `${color}22`,
-                        boxShadow: isArrival
-                          ? `inset 3px 0 0 ${color}`
-                          : undefined,
-                      }
-                    : undefined
-                }
+                title={title}
+                onClick={() => onDayClick(dateStr, night)}
+                style={background ? { background } : undefined}
                 className={cn(
                   "relative flex min-h-16 flex-col gap-1 border-b border-r p-1.5 text-left transition-colors sm:min-h-20",
                   "[&:nth-child(7n)]:border-r-0",
                   !inMonth && "bg-muted/20 text-muted-foreground/50",
-                  past && !occupant && "text-muted-foreground/40",
+                  past && !night && "text-muted-foreground/40",
                   clickable && "hover:bg-accent/60 cursor-pointer",
                   !clickable && "cursor-default",
                 )}
@@ -230,15 +255,15 @@ export function CalendarBoard({
                 >
                   {format(day, "d")}
                 </span>
-                {occupant && isArrival && occupant.member && (
+                {arriving && arriving.member && (
                   <div className="flex items-center gap-1 overflow-hidden">
                     <MemberAvatar
-                      avatar={occupant.member.avatar}
-                      name={occupant.member.name}
+                      avatar={arriving.member.avatar}
+                      name={arriving.member.name}
                       className="size-5 shrink-0"
                     />
                     <span className="truncate text-xs font-medium">
-                      {bookingName(occupant.member)}
+                      {bookingName(arriving.member)}
                     </span>
                   </div>
                 )}

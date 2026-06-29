@@ -89,13 +89,16 @@ export function BookingsList({
     booking: BookingWithMember | null;
   }>({ open: false, booking: null });
 
-  const households = React.useMemo(
-    () => Array.from(new Set(bookings.map((b) => b.household))).sort(),
+  const memberNames = React.useMemo(
+    () =>
+      Array.from(
+        new Set(bookings.map((b) => b.member?.name ?? "Okänd")),
+      ).sort((a, b) => a.localeCompare(b)),
     [bookings],
   );
 
   const visible = bookings.filter(
-    (b) => filter === "all" || b.household === filter,
+    (b) => filter === "all" || (b.member?.name ?? "Okänd") === filter,
   );
   const upcoming = visible
     .filter((b) => b.end > today)
@@ -108,18 +111,18 @@ export function BookingsList({
     <div className="space-y-4">
       {!hideTitle && <h1 className="text-xl font-semibold tracking-tight">Bokningar</h1>}
 
-      {households.length > 1 && (
+      {memberNames.length > 1 && (
         <div className="flex flex-wrap gap-1.5">
           <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
             Alla
           </FilterChip>
-          {households.map((h) => (
+          {memberNames.map((nameOption) => (
             <FilterChip
-              key={h}
-              active={filter === h}
-              onClick={() => setFilter(h)}
+              key={nameOption}
+              active={filter === nameOption}
+              onClick={() => setFilter(nameOption)}
             >
-              {h}
+              {nameOption}
             </FilterChip>
           ))}
         </div>

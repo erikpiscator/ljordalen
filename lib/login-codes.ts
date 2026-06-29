@@ -3,7 +3,7 @@ import { randomInt } from "node:crypto";
 import { db, LOGIN_CODES } from "./firebase";
 import { normalizeEmail } from "./members";
 import { sendEmail } from "./email";
-import { appUrl, emailLayout } from "./email-render";
+import { emailLayout } from "./email-render";
 
 // One-time login codes for passwordless email sign-in. The code is never stored
 // in the clear — only a bcrypt hash, keyed by email, alongside an expiry and an
@@ -81,8 +81,7 @@ export async function sendLoginCodeEmail(
       <div style="margin:4px 0 0;background:#f6f6f4;border:1px solid #ececec;border-radius:10px;padding:18px;text-align:center">
         <span style="font-size:30px;font-weight:700;letter-spacing:8px;color:#111111;font-family:ui-monospace,SFMono-Regular,Menlo,monospace">${code}</span>
       </div>
-      <p style="margin:14px 0 0;font-size:12px;color:#999999">Bad du inte om koden kan du ignorera det här mejlet.</p>`,
-    cta: { label: "Öppna inloggningen", href: `${appUrl()}/signin` },
+      <p style="margin:14px 0 0;font-size:12px;color:#999999">Ange koden på sidan där du angav din e-post. Bad du inte om koden kan du ignorera mejlet.</p>`,
   });
   await sendEmail({
     to: [email],

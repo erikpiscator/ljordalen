@@ -5,7 +5,7 @@ import { PALETTE } from "./colors";
 import { todayStr } from "./dates";
 import type { Avatar, Member, Role } from "./types";
 
-// Pleasant, distinct household colors handed out in order as members join.
+// Pleasant, distinct member colors handed out in order as members join.
 export const DEFAULT_COLORS = PALETTE;
 
 export function normalizeEmail(email: string): string {
@@ -45,14 +45,6 @@ export async function listMembers(): Promise<Member[]> {
   return snap.docs.map((d) => d.data() as Member);
 }
 
-/** Distinct, non-empty household names — for the "join an existing family" picker. */
-export async function listHouseholds(): Promise<string[]> {
-  const members = await listMembers();
-  return Array.from(
-    new Set(members.map((m) => m.household?.trim()).filter((h): h is string => !!h)),
-  ).sort((a, b) => a.localeCompare(b));
-}
-
 async function pickColor(): Promise<string> {
   const members = await listMembers();
   const used = new Set(members.map((m) => m.color));
@@ -62,7 +54,6 @@ async function pickColor(): Promise<string> {
 export interface CreateMemberInput {
   email: string;
   name: string;
-  household?: string;
   color?: string;
   role?: Role;
 }
@@ -74,8 +65,6 @@ export async function createMember(input: CreateMemberInput): Promise<Member> {
     email,
     notifyEmail: "",
     name: input.name.trim() || email,
-    // Household is optional — members choose/create their family themselves.
-    household: (input.household ?? "").trim(),
     color: input.color ?? (await pickColor()),
     role: input.role ?? "member",
     active: true,
@@ -92,7 +81,7 @@ export async function updateMember(
   patch: Partial<
     Pick<
       Member,
-      "name" | "notifyEmail" | "household" | "color" | "role" | "active" | "avatar"
+      "name" | "notifyEmail" | "color" | "role" | "active" | "avatar"
     >
   >,
 ): Promise<void> {

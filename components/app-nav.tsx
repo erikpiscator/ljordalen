@@ -20,7 +20,6 @@ import type { Avatar } from "@/lib/types";
 export interface NavUser {
   name: string;
   email: string;
-  household: string;
   color: string;
   avatar: Avatar;
   isAdmin: boolean;
@@ -83,7 +82,7 @@ export function AppNav({ user }: { user: NavUser }) {
                   <div className="flex flex-col">
                     <span className="truncate">{user.name}</span>
                     <span className="truncate text-xs font-normal text-muted-foreground">
-                      {user.household}
+                      {user.email}
                     </span>
                   </div>
                 </DropdownMenuLabel>
