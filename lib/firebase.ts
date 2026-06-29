@@ -61,3 +61,7 @@ export const MEMBERS = "members";
 export const BOOKINGS = "bookings";
 export const ACCESS_REQUESTS = "accessRequests";
 export const LOGIN_CODES = "loginCodes";
+export const ANNOUNCEMENTS = "announcements";
+// Subcollections under an announcement doc.
+export const COMMENTS = "comments";
+export const REACTIONS = "reactions";

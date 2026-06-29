@@ -8,7 +8,10 @@
     "build": "next build",
     "gcp-build": "next build",
     "start": "next start -p ${PORT:-3000}",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:emulator": "firebase emulators:exec --only firestore --project demo-bjornas 'vitest run --config vitest.emulator.config.ts'"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -41,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
   }
 }
