@@ -38,7 +38,13 @@ export function ProfileEditor({
   const [savingNotify, startSaveNotify] = React.useTransition();
   const [pickingPreset, startPreset] = React.useTransition();
   const [uploading, setUploading] = React.useState(false);
+  const [hovered, setHovered] = React.useState<string | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
+
+  const selectedId = avatar.type === "preset" ? avatar.value : null;
+  const previewLabel = PRESET_ANIMALS.find(
+    (a) => a.id === (hovered ?? selectedId),
+  )?.label;
 
   function saveName() {
     startSaveName(async () => {
@@ -188,8 +194,13 @@ export function ProfileEditor({
           </div>
 
           <div>
-            <Label className="mb-2 block">…eller välj en pixelkompis</Label>
-            <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <Label>…eller välj en pixelkompis</Label>
+              <span className="min-h-4 text-xs font-medium text-muted-foreground tabular-nums">
+                {previewLabel}
+              </span>
+            </div>
+            <div className="grid grid-cols-5 gap-2 rounded-xl border bg-muted/30 p-3 sm:grid-cols-10">
               {PRESET_ANIMALS.map((animal) => {
                 const active =
                   avatar.type === "preset" && avatar.value === animal.id;
@@ -198,11 +209,21 @@ export function ProfileEditor({
                     key={animal.id}
                     type="button"
                     title={animal.label}
+                    aria-label={animal.label}
+                    aria-pressed={active}
                     disabled={pickingPreset}
                     onClick={() => choosePreset(animal.id)}
+                    onMouseEnter={() => setHovered(animal.id)}
+                    onMouseLeave={() =>
+                      setHovered((h) => (h === animal.id ? null : h))
+                    }
+                    onFocusCapture={() => setHovered(animal.id)}
+                    onBlur={() =>
+                      setHovered((h) => (h === animal.id ? null : h))
+                    }
                     className={cn(
-                      "mx-auto size-12 overflow-hidden rounded-full ring-2 ring-transparent ring-offset-2 transition hover:scale-105",
-                      active && "ring-primary",
+                      "mx-auto aspect-square w-full max-w-12 overflow-hidden rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-background transition hover:scale-110 focus-visible:outline-none focus-visible:ring-ring",
+                      active && "ring-primary hover:scale-105",
                     )}
                   >
                     <PixelAvatar id={animal.id} />
